@@ -108,7 +108,7 @@ Resources:
             - sqs:SendMessage
             - sqs:PurgeQueue
             - sqs:DeleteMessage
-            Resource: !Sub PushQueue.Arn
+            Resource: !Sub PushedQueue.Arn
       - PolicyName: sqs2
         PolicyDocument:
           Version: '2012-10-17'
