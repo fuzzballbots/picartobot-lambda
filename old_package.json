@@ -1,0 +1,76 @@
+{
+  "name": "overlay.dealerslink.com",
+  "version": "1.4.0",
+  "description": "An AWS Lambda service written in NodeJS to Composite images in S3 using API Gateway endpoint ",
+  "main": "index.js",
+  "config": {
+    "s3DeployBucketName": "dealerslink-code-deployments",
+    "s3Prefix": "overlay-dealerslink-com",
+    "s3ImageBucketName": "Images",
+    "apiName": "API",
+    "region": "us-east-1",
+    "functionName": "Function",
+    "accountId": "620810885860",
+    "retention": 30,
+    "zoneName": "dealerslink.com",
+    "domainName": "overlay",
+    "certificateARN": "arn:aws:acm:us-east-1:620810885860:certificate/c5e90648-d36d-426d-8555-b417d61a3866",
+    "cloudFormationStackName": "OverlayService"
+  },
+  "scripts": {
+    "test": "nyc mocha",
+    "docker-build": "docker build --tag amazonlinux:nodejs .",
+    "docker-package": "mkdir -p dist && rm -r node_modules && docker run --rm --volume ${PWD}:/build amazonlinux:nodejs npm install --production && zip -r -q dist/function.zip * -x coverage/\\* dist/\\* etc/\\* scripts/\\* test/\\* && npm install -D",
+    "docker-test": "docker run --rm --volume ${PWD}:/build amazonlinux:nodejs node index",
+    "build": "gulp",
+    "fix": "gulp fix",
+    "lint": "gulp lint",
+    "coverage": "nyc --reporter=lcov mocha && cat ./coverage/lcov.info | codacy-coverage",
+    "pretty": "gulp pretty",
+    "config": "node ./scripts/configure.js",
+    "deconfig": "node ./scripts/deconfigure.js",
+    "aws-config": "node ./scripts/aws-configure.js",
+    "aws-deconfig": "node ./scripts/aws-deconfigure.js",
+    "invoke-lambda": "aws lambda invoke --function-name $npm_package_config_functionName --region $npm_package_config_region --payload file://api-gateway-event.json lambda-invoke-response.json && cat lambda-invoke-response.json",
+    "create-bucket": "aws s3 mb s3://$npm_package_config_s3DeployBucketName --region $npm_package_config_region",
+    "delete-bucket": "aws s3 rb s3://$npm_package_config_s3DeployBucketName --region $npm_package_config_region",
+    "describe": "aws cloudformation describe-stacks --stack-name $npm_package_config_cloudFormationStackName --region $npm_package_config_region --query Stacks[].Outputs --output table",
+    "package": "aws cloudformation package --template ./cloudformation.yaml --s3-bucket $npm_package_config_s3DeployBucketName --s3-prefix $npm_package_config_s3Prefix --output-template packaged-sam.yaml --region $npm_package_config_region",
+    "deploy": "aws cloudformation deploy --template-file packaged-sam.yaml --stack-name $npm_package_config_cloudFormationStackName --capabilities CAPABILITY_IAM --region $npm_package_config_region",
+    "package-deploy": "npm run docker-package && npm run package && npm run deploy",
+    "delete-stack": "aws cloudformation delete-stack --stack-name $npm_package_config_cloudFormationStackName --region $npm_package_config_region",
+    "setup": "npm run docker-build && npm run docker-package && (aws s3api get-bucket-location --bucket $npm_package_config_s3DeployBucketName --region $npm_package_config_region || npm run create-bucket) && npm run package-deploy",
+    "local": "sam local start-api -t packaged-sam.yaml"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dealerslink/overlay.dealerslink.com.git"
+  },
+  "author": "Jay Reardon <jay.reardon@dealerslink.com>",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/dealerslink/overlay.dealerslink.com/issues"
+  },
+  "homepage": "https://github.com/dealerslink/overlay.dealerslink.com#readme",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "codacy-coverage": "^3.0.0",
+    "commander": "^2.17.1",
+    "gulp": "^4.0.0",
+    "gulp-eslint": "^5.0.0",
+    "gulp-mocha": "^6.0.0",
+    "gulp-prettier": "^2.0.0",
+    "mocha": "^5.2.0",
+    "nyc": "^12.0.2",
+    "prettier": "^1.14.2",
+    "superagent": "^3.8.3",
+    "supertest": "^3.1.0"
+  },
+  "dependencies": {
+    "@dealerslink/lodash-extended": "^1.0.0",
+    "ajv": "^6.5.3",
+    "aws-sdk": "^2.298.0",
+    "inquirer": "^6.1.0",
+    "sharp": "^0.20.7"
+  }
+}

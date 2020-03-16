@@ -1,3 +1,5 @@
+# AWS Build #
+packaged-sam.yaml
 
 # Created by https://www.gitignore.io/api/node,code,linux,macos,windows
 # Edit at https://www.gitignore.io/?templates=node,code,linux,macos,windows
@@ -53,6 +55,11 @@ Temporary Items
 .apdisk
 
 ### Node ###
+util
+*.bak
+docs
+dist
+
 # Logs
 logs
 *.log

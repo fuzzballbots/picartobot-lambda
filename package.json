@@ -1,0 +1,72 @@
+{
+  "name": "picartobot",
+  "version": "1.0.0",
+  "description": "A Picarto stream announcement bot for Discord",
+  "main": "index.js",
+  "config": {
+    "s3DeployBucketName": "picartobot-code-deployments",
+    "region": "us-east-1",
+    "functionName": "Function",
+    "cloudFormationStackName": "PicartoBot"
+  },
+  "scripts": {
+    "test": "nyc mocha",
+    "docker-build": "docker build --tag amazonlinux:nodejs .",
+    "docker-package": "mkdir -p dist && rm -r node_modules && docker run --rm --volume ${PWD}:/build amazonlinux:nodejs npm install --production && zip -r -q dist/function.zip * -x coverage/\\* dist/\\* etc/\\* scripts/\\* test/\\* && npm install -D",
+    "docker-test": "docker run --rm --volume ${PWD}:/build amazonlinux:nodejs node index",
+    "build": "gulp",
+    "fix": "gulp fix",
+    "lint": "gulp lint",
+    "coverage": "nyc --reporter=lcov mocha && cat ./coverage/lcov.info | codacy-coverage",
+    "pretty": "gulp pretty",
+    "invoke-lambda": "aws lambda invoke --function-name $npm_package_config_functionName --region $npm_package_config_region --payload file://api-gateway-event.json lambda-invoke-response.json && cat lambda-invoke-response.json",
+    "create-bucket": "aws s3 mb s3://$npm_package_config_s3DeployBucketName --region $npm_package_config_region",
+    "delete-bucket": "aws s3 rb s3://$npm_package_config_s3DeployBucketName --region $npm_package_config_region",
+    "describe": "aws cloudformation describe-stacks --stack-name $npm_package_config_cloudFormationStackName --region $npm_package_config_region --query Stacks[].Outputs --output table",
+    "package": "aws cloudformation package --template ./cloudformation.yaml --s3-bucket $npm_package_config_s3DeployBucketName --s3-prefix $npm_package_config_s3Prefix --output-template packaged-sam.yaml --region $npm_package_config_region",
+    "deploy": "aws cloudformation deploy --template-file packaged-sam.yaml --stack-name $npm_package_config_cloudFormationStackName --capabilities CAPABILITY_IAM --region $npm_package_config_region",
+    "package-deploy": "npm run docker-package && npm run package && npm run deploy",
+    "delete-stack": "aws cloudformation delete-stack --stack-name $npm_package_config_cloudFormationStackName --region $npm_package_config_region",
+    "setup": "npm run docker-build && npm run docker-package && (aws s3api get-bucket-location --bucket $npm_package_config_s3DeployBucketName --region $npm_package_config_region || npm run create-bucket) && npm run package-deploy",
+    "local": "sam local start-api -t packaged-sam.yaml"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fuzzballbots/picartobot.git"
+  },
+  "keywords": [
+    "picarto",
+    "discord",
+    "live",
+    "bot"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fuzzballbots/picartobot/issues"
+  },
+  "homepage": "https://github.com/fuzzballbots/picartobot#readme",
+  "dependencies": {
+    "ajv": "^6.12.0",
+    "aws-sdk": "^2.635.0",
+    "axios": "^0.19.2",
+    "discord.js": "^12.0.1",
+    "lodash": "^4.17.15",
+    "mysql": "^2.18.1",
+    "sequelize": "^5.21.5"
+  },
+  "devDependencies": {
+    "commander": "^4.1.1",
+    "eslint": "^6.8.0",
+    "gulp": "^4.0.2",
+    "gulp-eslint": "^6.0.0",
+    "gulp-mocha": "^7.0.2",
+    "gulp-prettier": "^2.3.0",
+    "inquirer": "^7.0.6",
+    "mocha": "^7.1.0",
+    "nyc": "^15.0.0",
+    "prettier": "^1.19.1",
+    "superagent": "^5.2.2",
+    "supertest": "^4.0.2"
+  }
+}
