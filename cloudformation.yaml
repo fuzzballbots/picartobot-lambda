@@ -23,7 +23,7 @@ Resources:
   PushedFailQueue:
     Type: AWS::SQS::Queue
 
-  FetcherFunction:
+  CollectorFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./dist/function.zip
