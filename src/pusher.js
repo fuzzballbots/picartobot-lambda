@@ -28,7 +28,7 @@ class Pusher {
         }
       } else {
         // Send the binary file to the request
-        this.responseHelper.sendFile(data.buffer.toString('base64'), data.vehicleImageMimeType);
+        this.responseHelper.sendFile(data.buffer.toString('base64'), data.mimeType);
       }
     });
   }
